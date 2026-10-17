@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HerrWParty</title>
+
+<!-- Firebase SDK (compat versiyası - sadə istifadə üçün) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+
+<style>
+  :root {
+    --bg: #14161c;
+    --panel: #1c1f28;
+    --panel-edge: #2a2e3a;
+    --cream: #f2ede4;
+    --cream-dim: #b8b3a8;
+    --amber: #e8a33d;
+    --amber-dim: #a9793a;
+    --teal: #3a6b6b;
+    --live-red: #c1443a;
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); }
+
+  .wp-root {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    padding: 22px 16px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  .wp-marquee {
+    text-align: center;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--panel-edge);
+  }
+  .wp-marquee h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 30px;
+    margin: 0 0 4px;
+    letter-spacing: 0.5px;
+    color: var(--amber);
+  }
+  .wp-marquee p {
+    margin: 0;
+    color: var(--cream-dim);
+    font-size: 13.5px;
+  }
+
+  .wp-card {
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 10px;
+    padding: 16px;
+  }
+
+  .wp-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .wp-field:last-child { margin-bottom: 0; }
+  .wp-field label {
+    font-size: 12.5px;
+    color: var(--cream-dim);
+  }
+  .wp-field input {
+    background: var(--bg);
+    border: 1px solid var(--panel-edge);
+    color: var(--cream);
+    border-radius: 6px;
+    padding: 10px 11px;
+    font-size: 14.5px;
+    font-family: var(--font-body);
+    outline: none;
+  }
+  .wp-field input:focus { border-color: var(--amber-dim); }
+
+  .wp-choice-row { display: flex; gap: 10px; }
+  .wp-choice-btn {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--panel-edge);
+    color: var(--cream);
+    border-radius: 8px;
+    padding: 16px 10px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 14.5px;
+    cursor: pointer;
+    text-align: center;
+  }
+  .wp-choice-btn .sub {
+    display: block;
+    font-weight: 400;
+    font-size: 11.5px;
+    color: var(--cream-dim);
+    margin-top: 4px;
+  }
+  .wp-choice-btn.active {
+    border-color: var(--amber);
+    background: rgba(232, 163, 61, 0.08);
+  }
+
+  .wp-btn {
+    background: var(--amber);
+    color: #1c1204;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 14.5px;
+    cursor: pointer;
+    width: 100%;
+  }
+  .wp-btn:active { background: var(--amber-dim); }
+  .wp-btn.wp-secondary {
+    background: transparent;
+    color: var(--cream);
+    border: 1px solid var(--panel-edge);
+  }
+  .wp-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .wp-back {
+    background: none;
+    border: none;
+    color: var(--cream-dim);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0 0 4px;
+    text-align: left;
+  }
+
+  .wp-live {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--cream-dim);
+    margin-bottom: 10px;
+  }
+  .wp-live.on { display: flex; }
+  .wp-live .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--live-red);
+    animation: wp-pulse 1.4s infinite;
+  }
+  @keyframes wp-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+  .wp-code-pill {
+    font-family: var(--font-display);
+    color: var(--amber);
+    letter-spacing: 2px;
+    font-size: 14px;
+  }
+
+  .wp-copy-btn {
+    margin-left: 8px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-family: inherit;
+    color: var(--amber);
+    background: transparent;
+    border: 1px solid var(--amber);
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .wp-copy-btn:active { opacity: 0.6; }
+
+  .wp-people {
+    display: none;
+    font-size: 12.5px;
+    color: var(--cream-dim);
+    margin: -4px 0 10px;
+  }
+  .wp-people.on { display: block; }
+  .wp-people b { color: var(--amber); font-weight: 600; }
+
+  .wp-video-wrap {
+    display: none;
+    position: relative;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--panel-edge);
+    margin: 0 -16px;
+  }
+  .wp-video-wrap.on { display: block; }
+  .wp-video-wrap video { width: 100%; display: block; aspect-ratio: 16 / 9; max-height: 78vh; object-fit: contain; background: #000; }
+
+  .wp-fs-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 20;
+    background: rgba(0,0,0,0.55);
+    border: 1px solid var(--panel-edge);
+    color: var(--cream);
+    border-radius: 6px;
+    padding: 6px 9px;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .wp-fs-notify {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 54px;
+    z-index: 25;
+    background: rgba(20,22,28,0.92);
+    border: 1px solid var(--amber-dim);
+    color: var(--cream);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    line-height: 1.4;
+    display: none;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+  }
+  .wp-fs-notify.show { display: block; }
+  .wp-fs-notify b { color: var(--amber); }
+
+  /* ---- Toast bildirişləri ---- */
+  .wp-toast-wrap {
+    position: fixed;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: calc(100% - 32px);
+    max-width: 480px;
+    pointer-events: none;
+  }
+  .wp-toast {
+    background: var(--panel);
+    border: 1px solid var(--amber-dim);
+    color: var(--cream);
+    padding: 11px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.4;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    opacity: 0;
+    transform: translateY(-12px);
+    transition: opacity .25s ease, transform .25s ease;
+  }
+  .wp-toast.show { opacity: 1; transform: translateY(0); }
+  .wp-toast.warn { border-color: var(--live-red); }
+  .wp-toast.join { border-color: var(--teal); }
+
+  /* ---- Təsdiq modalı ---- */
+  .wp-modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 998;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .wp-modal-backdrop.on { display: flex; }
+  .wp-modal {
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 340px;
+    width: 100%;
+    text-align: center;
+  }
+  .wp-modal p {
+    margin: 0 0 16px;
+    font-size: 14.5px;
+    color: var(--cream);
+  }
+  .wp-modal-row { display: flex; gap: 10px; }
+  .wp-modal-row .wp-btn { padding: 11px 10px; font-size: 14px; }
+
+  .wp-chat { display: none; }
+  .wp-chat.on { display: flex; flex-direction: column; }
+
+  .wp-chat-log {
+    height: 220px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-right: 4px;
+    margin-bottom: 12px;
+  }
+  .wp-msg { font-size: 13.5px; line-height: 1.4; }
+  .wp-msg .name { color: var(--amber); font-weight: 600; margin-right: 6px; }
+  .wp-msg.mine .name { color: var(--teal); }
+  .wp-msg .time { color: var(--cream-dim); font-size: 11px; margin-left: 6px; }
+  .wp-empty { color: var(--cream-dim); font-size: 13px; text-align: center; margin-top: 70px; }
+
+  .wp-chat-input { display: flex; gap: 8px; }
+  .wp-chat-input input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--panel-edge);
+    color: var(--cream);
+    border-radius: 6px;
+    padding: 11px 12px;
+    font-size: 15px;
+    font-family: var(--font-body);
+    outline: none;
+    min-width: 0;
+  }
+  .wp-chat-input input:focus { border-color: var(--amber-dim); }
+  .wp-chat-input button {
+    background: var(--teal);
+    color: var(--cream);
+    border: none;
+    border-radius: 6px;
+    padding: 0 18px;
+    font-size: 14.5px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .wp-hint { font-size: 12px; color: var(--cream-dim); margin-top: 8px; line-height: 1.5; }
+  .wp-error { font-size: 12.5px; color: var(--live-red); margin-top: 8px; display: none; }
+  .wp-error.on { display: block; }
+
+  .wp-step { display: none; }
+  .wp-step.on { display: block; }
+
+  .wp-conn {
+    font-size: 11.5px;
+    text-align: center;
+    color: var(--cream-dim);
+  }
+  .wp-conn.err { color: var(--live-red); }
+
+  .wp-profile-row {
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--cream-dim);
+  }
+  .wp-profile-row button {
+    background: none;
+    border: none;
+    color: var(--amber-dim);
+    font-size: 12.5px;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 2px;
+  }
+
+  .wp-movie-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--panel-edge);
+  }
+  .wp-movie-item:last-child { border-bottom: none; }
+  .wp-movie-info { min-width: 0; }
+  .wp-movie-title {
+    font-weight: 600;
+    font-size: 14.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .wp-movie-by { font-size: 11.5px; color: var(--cream-dim); margin-top: 2px; }
+  .wp-movie-go {
+    flex-shrink: 0;
+    background: var(--amber);
+    color: #1c1204;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .wp-movies-list { max-height: 320px; overflow-y: auto; margin-bottom: 14px; }
+  .wp-movies-add {
+    border-top: 1px solid var(--panel-edge);
+    padding-top: 10px;
+  }
+  .wp-movie-add-toggle {
+    background: none;
+    border: none;
+    color: var(--cream-dim);
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px 0;
+  }
+  .wp-movies-add-form {
+    display: none;
+    margin-top: 10px;
+  }
+  .wp-movies-add-form.on { display: block; }
+</style>
+</head>
+<body>
+
+<div class="wp-toast-wrap" id="wp-toast-wrap"></div>
+
+<div class="wp-modal-backdrop" id="wp-leave-modal">
+  <div class="wp-modal">
+    <p>Otaqdan çıxmaq istədiyinə əminsən?</p>
+    <div class="wp-modal-row">
+      <button class="wp-btn wp-secondary" id="wp-leave-cancel">Xeyr</button>
+      <button class="wp-btn" id="wp-leave-confirm">Bəli, çıx</button>
+    </div>
+  </div>
+</div>
+
+<div class="wp-root">
+  <div class="wp-marquee">
+    <h1>HerrWParty</h1>
+    <p>Prepared by Ulvi Latifov</p>
+  </div>
+
+  <div class="wp-profile-row" id="wp-profile-row" style="display:none;">
+    👤 <span id="wp-profile-name-label"></span>
+    <button id="wp-profile-change">dəyiş</button>
+  </div>
+
+  <div class="wp-conn" id="wp-conn">Firebase-ə qoşulur...</div>
+
+  <div class="wp-card" id="wp-setup">
+
+    <div class="wp-step" id="wp-step-profile">
+      <div class="wp-hint" style="margin:0 0 14px;">
+        Əvvəlcə adını yaz — bunu bir dəfə edəcəksən, sonrakı dəfələr yenidən yazmayacaqsan.
+      </div>
+      <div class="wp-field">
+        <label>Adın</label>
+        <input id="wp-name-profile" type="text" placeholder="Məs: Aysel" />
+      </div>
+      <button class="wp-btn" id="wp-profile-go">Davam et</button>
+      <div class="wp-error" id="wp-error-profile"></div>
+    </div>
+
+    <div class="wp-step" id="wp-step-choice">
+      <div class="wp-hint" style="margin:0 0 14px;">
+        <b style="color: var(--amber);">Necə işləyir?</b><br/>
+        1) Otaq yaradanda birbaşa .mp4 video linki verirsən və sənə otaq kodu yaranır.<br/>
+        2) Kodu partnyoruna göndər, o "Otağa gir" ilə həmin kodu yazsın.<br/>
+        3) Video ikinizdə də eyni anda oynayır/dayanır, altda isə canlı söhbət edə bilərsiniz.
+      </div>
+      <div class="wp-choice-row">
+        <button class="wp-choice-btn" id="wp-choice-create">Otaq yarat
+          <span class="sub">Video linkini sən əlavə et</span>
+        </button>
+        <button class="wp-choice-btn" id="wp-choice-join">Otağa gir
+          <span class="sub">Otaq kodun varsa</span>
+        </button>
+      </div>
+      <button class="wp-btn wp-secondary" id="wp-choice-movies" style="margin-top:10px;">🎬 Film siyahısı</button>
+    </div>
+
+    <div class="wp-step" id="wp-step-create">
+      <button class="wp-back" id="wp-back-1">‹ Geri</button>
+      <div class="wp-field">
+        <label>Video linki</label>
+        <input id="wp-url-create" type="text" placeholder="https://.../video.mp4" />
+        <div class="wp-hint" style="margin-top:2px;">
+          Birbaşa oxuna bilən .mp4 video linki yapışdır.
+        </div>
+      </div>
+      <div class="wp-field">
+        <label>Otaq kodu (istəsən özün yaz)</label>
+        <input id="wp-room-code-create" type="text" placeholder="Boş saxla, avtomatik yaransın" />
+      </div>
+      <button class="wp-btn" id="wp-create-go">Otaq yarat</button>
+      <div class="wp-error" id="wp-error-create"></div>
+    </div>
+
+    <div class="wp-step" id="wp-step-join">
+      <button class="wp-back" id="wp-back-2">‹ Geri</button>
+      <div class="wp-field">
+        <label>Otaq kodu</label>
+        <input id="wp-room-join" type="text" placeholder="Məs: seir2024" />
+      </div>
+      <button class="wp-btn" id="wp-join-go">Otağa gir</button>
+      <div class="wp-error" id="wp-error-join"></div>
+    </div>
+
+    <div class="wp-step" id="wp-step-movies">
+      <button class="wp-back" id="wp-back-3">‹ Geri</button>
+      <div class="wp-movies-list" id="wp-movies-list">
+        <div class="wp-empty" style="margin-top:20px;">Hələ film əlavə olunmayıb.</div>
+      </div>
+      <div class="wp-movies-add">
+        <button class="wp-movie-add-toggle" id="wp-movie-add-toggle" type="button">+ film əlavə et</button>
+        <div class="wp-movies-add-form" id="wp-movies-add-form">
+          <div class="wp-field">
+            <label>Film adı</label>
+            <input id="wp-movie-title" type="text" placeholder="Məs: Truman Show" />
+          </div>
+          <div class="wp-field">
+            <label>Video linki</label>
+            <input id="wp-movie-url" type="text" placeholder="https://.../video.mp4" />
+          </div>
+          <div class="wp-field">
+            <label>Parol</label>
+            <input id="wp-movie-pass" type="password" placeholder="Parol" />
+          </div>
+          <button class="wp-btn" id="wp-movie-add-go">Siyahıya əlavə et</button>
+          <div class="wp-error" id="wp-error-movie"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="wp-live" id="wp-live">
+    <div class="dot"></div>
+    <span class="wp-code-pill" id="wp-room-label"></span>
+    <button class="wp-copy-btn" id="wp-copy-btn" type="button">Kod</button>
+    <button class="wp-copy-btn" id="wp-link-btn" type="button">Link</button>
+  </div>
+  <div class="wp-people" id="wp-people"></div>
+
+  <div class="wp-video-wrap" id="wp-video-wrap">
+    <button class="wp-fs-btn" id="wp-fs-btn" title="Tam ekran">⛶</button>
+    <div class="wp-fs-notify" id="wp-fs-notify"></div>
+    <video id="wp-video" controls playsinline></video>
+  </div>
+
+  <div class="wp-card wp-chat" id="wp-chat">
+    <div class="wp-chat-log" id="wp-chat-log">
+      <div class="wp-empty">Hələ mesaj yoxdur. İlk yazan sən ol.</div>
+    </div>
+    <div class="wp-chat-input">
+      <input id="wp-msg-input" type="text" placeholder="Mesaj yaz..." />
+      <button id="wp-send">Göndər</button>
+    </div>
+  </div>
+
+  <button class="wp-btn wp-secondary" id="wp-leave" style="display:none;">Otaqdan çıx</button>
+</div>
+
+<script>
+(function() {
+  // ============================================================
+  // FIREBASE KONFİQURASİYASI
+  // Firebase Console -> Project settings -> General -> Your apps
+  // hissəsindən kopyaladığın konfiqi bura yapışdır.
+  // ============================================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyA3peOsoPIHPkf3baa4MfHql8DjqR-ImHM",
+    authDomain: "herrparty-f0579.firebaseapp.com",
+    databaseURL: "https://herrparty-f0579-default-rtdb.firebaseio.com",
+    projectId: "herrparty-f0579",
+    storageBucket: "herrparty-f0579.firebasestorage.app",
+    messagingSenderId: "290881204740",
+    appId: "1:290881204740:web:95300d0dd6f627e5f77b51"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const $ = (id) => document.getElementById(id);
+
+  let room = null;
+  let myName = localStorage.getItem('wp_name') || '';
+  let myId = 'u' + Date.now() + Math.floor(Math.random() * 10000);
+  let video = $('wp-video');
+  let stateRef = null, chatRef = null, presenceRef = null;
+  let stateListenerFn = null, chatListenerFn = null;
+  let presenceAddedFn = null, presenceRemovedFn = null;
+  let lastLocalActionAt = 0;
+  let suppressEvents = false;
+  let suppressTimer = null;
+  let leavingIntentionally = false;
+  let moviesListenerFn = null;
+  let lastMsgCount = 0;
+  let chatInitialized = false;
+  let isFsMode = false;
+  let fsNotifyTimer = null;
+
+  // ---- Sinxronizasiya üçün əlavə dəyişənlər ----
+  let bufferRef = null, bufferListenerFn = null;
+  let remoteState = null;          // otaqdakı son məlum vəziyyət
+  let othersBuffering = false;     // başqası buffer edir?
+  let myBuffering = false;         // mən buffer edirəm?
+  let pausedForBuffer = false;     // buffer üçün özümüz dayandırmışıq?
+  let pendingSeek = false;         // proqramla etdiyimiz seek gözlənilir
+  let pendingSeekTimer = null;
+  let bufferDebounce = null;
+  let heartbeatTimer = null;
+  let eventsAttached = false;
+  let presenceValueFn = null;
+  let chatQuery = null;
+
+  // Firebase server saatı ilə yerli saat arasındakı fərq (telefonların saatı fərqli ola bilər)
+  let serverOffset = 0;
+  db.ref('.info/serverTimeOffset').on('value', (snap) => { serverOffset = snap.val() || 0; });
+  function serverNow() { return Date.now() + serverOffset; }
+
+  // ---- Toast bildirişləri ----
+  function showToast(msg, type) {
+    const wrap = $('wp-toast-wrap');
+    const el = document.createElement('div');
+    el.className = 'wp-toast' + (type ? ' ' + type : '');
+    el.textContent = msg;
+    wrap.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('show'));
+    setTimeout(() => {
+      el.classList.remove('show');
+      setTimeout(() => el.remove(), 300);
+    }, 3800);
+  }
+
+  function refFor(r) { return db.ref('rooms/' + r); }
+
+  function showStep(id) {
+    document.querySelectorAll('.wp-step').forEach(el => el.classList.remove('on'));
+    $(id).classList.add('on');
+  }
+
+  function showError(id, msg) {
+    const el = $(id);
+    el.textContent = msg;
+    el.classList.add('on');
+  }
+  function hideError(id) {
+    $(id).classList.remove('on');
+  }
+
+  function randomRoomCode() {
+    const adjectives = [
+      'tenbel', 'yuxulu', 'deli', 'acgoz', 'sirli', 'qorxaq', 'sakit', 'dombul',
+      'qaraqabaq', 'doymaz', 'unudan', 'lovga', 'utancaq', 'hoppanan', 'sirtiq', 'pinti'
+    ];
+    const nouns = [
+      'ayi', 'pisik', 'it', 'meymun', 'fil', 'zurafe', 'sican', 'dovsan',
+      'tisbaga', 'bayqus', 'toyuq', 'xoruz', 'qoyun', 'keci', 'inek', 'donuz',
+      'ordek', 'qurbaga', 'ilan', 'kirpi', 'dele', 'tulku', 'aslan', 'qaplan'
+    ];
+    const a = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const n = nouns[Math.floor(Math.random() * nouns.length)];
+    const num = Math.floor(10 + Math.random() * 90);
+    return a + n + num;
+  }
+
+  // ---- Bir dəfəlik profil (ad) ----
+  function refreshProfileLabel() {
+    if (myName) {
+      $('wp-profile-name-label').textContent = myName;
+      $('wp-profile-row').style.display = 'block';
+    } else {
+      $('wp-profile-row').style.display = 'none';
+    }
+  }
+
+  function initProfile() {
+    if (myName) {
+      showStep('wp-step-choice');
+    } else {
+      showStep('wp-step-profile');
+    }
+    refreshProfileLabel();
+  }
+
+  $('wp-profile-go').addEventListener('click', () => {
+    hideError('wp-error-profile');
+    const val = $('wp-name-profile').value.trim();
+    if (!val) { showError('wp-error-profile', 'Adını yaz.'); return; }
+    myName = val;
+    localStorage.setItem('wp_name', myName);
+    refreshProfileLabel();
+    showStep(linkRoom ? 'wp-step-join' : 'wp-step-choice');
+    if (linkRoom) joinRoom();
+  });
+
+  $('wp-profile-change').addEventListener('click', () => {
+    $('wp-name-profile').value = myName;
+    showStep('wp-step-profile');
+  });
+
+  const linkRoom = (new URLSearchParams(location.search).get('room') || '').trim().toLowerCase();
+  initProfile();
+  if (linkRoom) {
+    $('wp-room-join').value = linkRoom;
+    if (myName) {
+      showStep('wp-step-join');
+      setTimeout(() => joinRoom(), 300);
+    }
+  }
+
+  // ---- Firebase bağlantı statusu ----
+  db.ref('.info/connected').on('value', (snap) => {
+    const el = $('wp-conn');
+    if (snap.val() === true) {
+      el.textContent = 'Firebase-ə qoşuldu ✓';
+      el.classList.remove('err');
+    } else {
+      el.textContent = 'Bağlantı yoxdur...';
+      el.classList.add('err');
+    }
+  });
+
+  async function createRoomWithUrl(urlVal, errId, customCode) {
+    hideError(errId);
+    if (!myName) { showStep('wp-step-profile'); return; }
+    if (!urlVal) { showError(errId, 'Video linkini yaz.'); return; }
+
+    let code = (customCode || '').trim().toLowerCase().replace(/\s+/g, '');
+    if (code) {
+      try {
+        const snap = await refFor(code).child('state').get();
+        if (snap.exists() && snap.val() && snap.val().url) {
+          showError(errId, 'Bu kod artıq istifadə olunur, başqa kod seç.');
+          return;
+        }
+      } catch (e) {
+        showError(errId, 'Bağlantı xətası. Firebase konfiqini yoxla.');
+        return;
+      }
+    } else {
+      code = randomRoomCode();
+    }
+
+    room = code;
+    const base = refFor(room);
+    stateRef = base.child('state');
+    chatRef = base.child('chat');
+    presenceRef = base.child('presence');
+
+    const initialState = { url: urlVal, isPlaying: false, time: 0, updatedBy: myName, updatedAt: serverNow() };
+
+    try {
+      await stateRef.set(initialState);
+      await chatRef.set({ messages: [] });
+    } catch (e) {
+      showError(errId, 'Otaq yaradıla bilmədi. Firebase konfiqini yoxla.');
+      return;
+    }
+
+    enterRoom(initialState);
+  }
+
+  async function createRoom() {
+    const urlVal = $('wp-url-create').value.trim();
+    const customCode = $('wp-room-code-create').value.trim();
+    await createRoomWithUrl(urlVal, 'wp-error-create', customCode);
+  }
+
+  async function joinRoom() {
+    hideError('wp-error-join');
+    if (!myName) { showStep('wp-step-profile'); return; }
+    const roomVal = $('wp-room-join').value.trim().toLowerCase().replace(/\s+/g, '');
+
+    if (!roomVal) { showError('wp-error-join', 'Otaq kodunu yaz.'); return; }
+
+    room = roomVal;
+    const base = refFor(room);
+    stateRef = base.child('state');
+    chatRef = base.child('chat');
+    presenceRef = base.child('presence');
+
+    let existing = null;
+    try {
+      const snap = await stateRef.get();
+      existing = snap.exists() ? snap.val() : null;
+    } catch (e) {
+      showError('wp-error-join', 'Bağlantı xətası. Firebase konfiqini yoxla.');
+      return;
+    }
+
+    if (!existing || !existing.url) {
+      showError('wp-error-join', 'Bu kodla otaq tapılmadı. Kodu yoxla.');
+      return;
+    }
+
+    enterRoom(existing);
+  }
+
+  // ---- Film siyahısı (bütün istifadəçilər üçün ortaq) ----
+  function moviesRef() { return db.ref('movies'); }
+
+  function renderMovies(snap) {
+    const val = snap.val() || {};
+    const list = Object.keys(val).map(k => Object.assign({ id: k }, val[k]));
+    list.sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+    const box = $('wp-movies-list');
+    if (list.length === 0) {
+      box.innerHTML = '<div class="wp-empty" style="margin-top:20px;">Hələ film əlavə olunmayıb.</div>';
+      return;
+    }
+    box.innerHTML = list.map(m =>
+      '<div class="wp-movie-item">' +
+        '<div class="wp-movie-info">' +
+          '<div class="wp-movie-title">' + escapeHtml(m.title || 'Adsız film') + '</div>' +
+          '<div class="wp-movie-by">əlavə etdi: ' + escapeHtml(m.addedBy || '?') + '</div>' +
+        '</div>' +
+        '<button class="wp-movie-go" data-url="' + escapeHtml(m.url || '') + '">Otaq yarat</button>' +
+      '</div>'
+    ).join('');
+    box.querySelectorAll('.wp-movie-go').forEach(btn => {
+      btn.addEventListener('click', () => {
+        createRoomWithUrl(btn.getAttribute('data-url'), 'wp-error-movie');
+      });
+    });
+  }
+
+  function startMoviesListener() {
+    if (moviesListenerFn) return;
+    moviesListenerFn = (snap) => renderMovies(snap);
+    moviesRef().on('value', moviesListenerFn);
+  }
+
+  const MOVIE_ADD_PASSWORD = 'UlviCoxAgillidi';
+
+  async function addMovie() {
+    hideError('wp-error-movie');
+    if (!myName) { showStep('wp-step-profile'); return; }
+    const title = $('wp-movie-title').value.trim();
+    const url = $('wp-movie-url').value.trim();
+    const pass = $('wp-movie-pass').value;
+    if (!title) { showError('wp-error-movie', 'Film adını yaz.'); return; }
+    if (!url) { showError('wp-error-movie', 'Video linkini yaz.'); return; }
+    if (pass !== MOVIE_ADD_PASSWORD) { showError('wp-error-movie', 'Parol yanlışdır.'); return; }
+
+    try {
+      await moviesRef().push({ title: title, url: url, addedBy: myName, addedAt: Date.now() });
+      $('wp-movie-title').value = '';
+      $('wp-movie-url').value = '';
+      $('wp-movie-pass').value = '';
+      $('wp-movies-add-form').classList.remove('on');
+    } catch (e) {
+      showError('wp-error-movie', 'Siyahıya əlavə edilə bilmədi.');
+    }
+  }
+
+  $('wp-choice-movies').addEventListener('click', () => {
+    startMoviesListener();
+    showStep('wp-step-movies');
+  });
+  $('wp-back-3').addEventListener('click', () => showStep('wp-step-choice'));
+  $('wp-movie-add-go').addEventListener('click', addMovie);
+  $('wp-movie-add-toggle').addEventListener('click', () => {
+    $('wp-movies-add-form').classList.toggle('on');
+  });
+
+  function enterRoom(state) {
+    $('wp-setup').style.display = 'none';
+    $('wp-live').classList.add('on');
+    $('wp-people').classList.add('on');
+    $('wp-room-label').textContent = 'Otaq kodu: ' + room;
+    $('wp-video-wrap').classList.add('on');
+    $('wp-chat').classList.add('on');
+    $('wp-leave').style.display = 'block';
+
+    video.src = state.url;
+    suppressEvents = true;
+    video.currentTime = expectedTime(Object.assign({}, state, { updatedAt: typeof state.updatedAt === 'number' ? state.updatedAt : serverNow() }));
+    clearTimeout(suppressTimer);
+    suppressTimer = setTimeout(() => { suppressEvents = false; }, 2000);
+    if (state.isPlaying) video.play().catch(() => {});
+
+    attachVideoEvents();
+    bufferRef = stateRef.parent.child('buffering');
+    othersBuffering = false; myBuffering = false; pausedForBuffer = false; remoteState = null;
+    startStateListener();
+    startBufferListener();
+    startHeartbeat();
+    startChatListener();
+    startPresence();
+    leavingIntentionally = false;
+  }
+
+  // ---- Bağlantı izləmə: kimsə çaşıb çıxsa (bağlantı qopsa) video dayansın ----
+  function startPresence() {
+    const myPresence = presenceRef.child(myId);
+    myPresence.set({ name: myName, at: Date.now() });
+    myPresence.onDisconnect().remove();
+
+    let presenceReady = false;
+    setTimeout(() => { presenceReady = true; }, 1200);
+    presenceAddedFn = (snap) => {
+      const data = snap.val();
+      if (!data || snap.key === myId || !presenceReady) return;
+      showToast(data.name + ' otağa qoşuldu', 'join');
+    };
+    presenceRemovedFn = (snap) => {
+      const data = snap.val();
+      if (!data || snap.key === myId || leavingIntentionally) return;
+      showToast(data.name + ' bağlantısı kəsildi — video dayandırıldı', 'warn');
+      if (!video.paused) {
+        video.pause();
+        pushState(false, video.currentTime, true);
+      }
+    };
+    presenceValueFn = (snap) => {
+      const names = [];
+      snap.forEach(ch => {
+        const d = ch.val();
+        if (d && d.name) names.push(ch.key === myId ? d.name + ' (sən)' : d.name);
+      });
+      $('wp-people').innerHTML = '👥 <b>' + names.length + '</b> nəfər: ' + names.map(escapeHtml).join(', ');
+    };
+    presenceRef.on('value', presenceValueFn);
+    presenceRef.on('child_added', presenceAddedFn);
+    presenceRef.on('child_removed', presenceRemovedFn);
+  }
+
+  // ---- Tam ekranda mesaj bildirişi ----
+  function isOurFullscreen() {
+    const fsEl = document.fullscreenElement || document.webkitFullscreenElement ||
+                 document.mozFullScreenElement || document.msFullscreenElement;
+    return fsEl === $('wp-video-wrap') || video.webkitDisplayingFullscreen === true;
+  }
+
+  ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(ev => {
+    document.addEventListener(ev, () => {
+      isFsMode = isOurFullscreen();
+      if (!isFsMode) hideFsNotify();
+    });
+  });
+  video.addEventListener('webkitbeginfullscreen', () => { isFsMode = true; });
+  video.addEventListener('webkitendfullscreen', () => { isFsMode = false; hideFsNotify(); });
+
+  $('wp-fs-btn').addEventListener('click', () => {
+    const wrap = $('wp-video-wrap');
+    if (wrap.requestFullscreen) {
+      wrap.requestFullscreen().catch(() => { if (video.webkitEnterFullscreen) video.webkitEnterFullscreen(); });
+    } else if (wrap.webkitRequestFullscreen) {
+      wrap.webkitRequestFullscreen();
+    } else if (video.webkitEnterFullscreen) {
+      video.webkitEnterFullscreen();
+    }
+  });
+
+  function beep() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.value = 880;
+      g.gain.setValueAtTime(0.001, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.start();
+      o.stop(ctx.currentTime + 0.42);
+    } catch (e) {}
+  }
+
+  function hideFsNotify() {
+    $('wp-fs-notify').classList.remove('show');
+  }
+
+  function notifyNewMessage(name, text) {
+    if (navigator.vibrate) navigator.vibrate(180);
+    beep();
+    if (isFsMode) {
+      const el = $('wp-fs-notify');
+      el.innerHTML = '💬 <b>' + escapeHtml(name) + '</b>: ' + escapeHtml(text);
+      el.classList.add('show');
+      clearTimeout(fsNotifyTimer);
+      fsNotifyTimer = setTimeout(hideFsNotify, 4000);
+    }
+  }
+
+  // Hazırda otaq üçün gözlənilən vaxt (oynayırsa, keçən vaxtı da əlavə edir)
+  function expectedTime(st) {
+    if (!st) return 0;
+    if (!st.isPlaying) return st.time || 0;
+    const elapsed = Math.max(0, (serverNow() - (st.updatedAt || serverNow())) / 1000);
+    return (st.time || 0) + elapsed;
+  }
+
+  function quietly(fn, ms) {
+    suppressEvents = true;
+    clearTimeout(suppressTimer);
+    try { fn(); } catch (e) {}
+    suppressTimer = setTimeout(() => { suppressEvents = false; }, ms || 1000);
+  }
+
+  function seekTo(t) {
+    pendingSeek = true;
+    clearTimeout(pendingSeekTimer);
+    pendingSeekTimer = setTimeout(() => { pendingSeek = false; }, 8000);
+    video.currentTime = t;
+  }
+
+  function attachVideoEvents() {
+    if (eventsAttached) return;
+    eventsAttached = true;
+    const live = () => room && !leavingIntentionally;
+
+    video.addEventListener('play', () => {
+      if (!live() || suppressEvents) return;
+      pushState(true, video.currentTime);
+    });
+    video.addEventListener('pause', () => {
+      if (!live() || suppressEvents) return;
+      pushState(false, video.currentTime);
+    });
+    video.addEventListener('seeked', () => {
+      if (!live()) return;
+      if (pendingSeek) { pendingSeek = false; clearTimeout(pendingSeekTimer); return; }
+      if (suppressEvents) return;
+      pushState(!video.paused, video.currentTime);
+    });
+
+    // ---- Buffer izləmə: internetim zəifləyib dondursa, hamı gözləsin ----
+    ['waiting', 'stalled'].forEach(ev => video.addEventListener(ev, () => {
+      if (!live() || video.paused) return;
+      clearTimeout(bufferDebounce);
+      bufferDebounce = setTimeout(() => setMyBuffering(true), 500); // qısa donmalara reaksiya vermə
+    }));
+    ['playing', 'canplay', 'canplaythrough', 'pause'].forEach(ev => video.addEventListener(ev, () => {
+      clearTimeout(bufferDebounce);
+      if (!live()) return;
+      if (ev === 'canplay' && video.paused && !(remoteState && remoteState.isPlaying)) {
+        setMyBuffering(false); return;
+      }
+      if (ev !== 'canplay' || video.readyState >= 3) setMyBuffering(false);
+    }));
+  }
+
+  function setMyBuffering(on) {
+    if (!bufferRef || myBuffering === on) return;
+    myBuffering = on;
+    const me = bufferRef.child(myId);
+    if (on) {
+      me.set({ name: myName, at: firebase.database.ServerValue.TIMESTAMP }).catch(() => {});
+      me.onDisconnect().remove();
+    } else {
+      me.remove().catch(() => {});
+      me.onDisconnect().cancel();
+    }
+  }
+
+  function startBufferListener() {
+    bufferListenerFn = (snap) => {
+      const data = snap.val() || {};
+      const others = Object.keys(data).filter(k => k !== myId);
+      const was = othersBuffering;
+      othersBuffering = others.length > 0;
+
+      if (othersBuffering && !was) {
+        const nm = data[others[0]].name || 'Qarşı tərəf';
+        showToast(nm + ' üçün video yüklənir — gözlənilir…', 'warn');
+        if (!video.paused) {
+          pausedForBuffer = true;
+          quietly(() => video.pause(), 1000);
+        }
+      } else if (!othersBuffering && was) {
+        // Hamı hazırdır — dəqiq yerə qayıdıb birlikdə davam edirik
+        if (pausedForBuffer && remoteState && remoteState.isPlaying) {
+          pausedForBuffer = false;
+          const t = expectedTime(remoteState);
+          if (Math.abs(video.currentTime - t) > 0.5) seekTo(t);
+          quietly(() => video.play().catch(() => {}), 1200);
+          showToast('Davam edir ▶', 'join');
+        }
+        pausedForBuffer = false;
+      }
+    };
+    bufferRef.on('value', bufferListenerFn);
+  }
+
+  // ---- Hər 2 saniyədən bir sürüşməni düzəlt (drift correction) ----
+  function startHeartbeat() {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = setInterval(() => {
+      if (!room || !remoteState) return;
+      if (othersBuffering || myBuffering || video.readyState < 3 || pendingSeek) return;
+      const target = expectedTime(remoteState);
+      const drift = video.currentTime - target; // müsbət = mən qabaqdayam
+
+      if (!remoteState.isPlaying) {
+        if (video.playbackRate !== 1) video.playbackRate = 1;
+        if (Math.abs(drift) > 0.5 && video.paused) seekTo(target);
+        return;
+      }
+      if (Math.abs(drift) > 1.2) {
+        quietly(() => seekTo(target), 1500);       // böyük fərq: birbaşa keç
+        video.playbackRate = 1;
+      } else if (Math.abs(drift) > 0.25) {
+        video.playbackRate = drift > 0 ? 0.95 : 1.05; // kiçik fərq: yumşaq sürət dəyişimi
+      } else if (video.playbackRate !== 1) {
+        video.playbackRate = 1;
+      }
+    }, 2000);
+  }
+
+  function pushState(isPlaying, time, auto) {
+    lastLocalActionAt = Date.now();
+    stateRef.set({
+      url: video.currentSrc || video.src,
+      isPlaying: isPlaying,
+      time: time,
+      updatedBy: myName,
+      updatedById: myId,
+      auto: !!auto,
+      updatedAt: firebase.database.ServerValue.TIMESTAMP
+    }).catch(e => console.error('state set failed', e));
+  }
+
+  function startStateListener() {
+    stateListenerFn = (snap) => {
+      const s = snap.val();
+      if (!s) return;
+      if (typeof s.updatedAt !== 'number') return; // server saatı hələ təyin olunmayıb
+      const prev = remoteState;
+      remoteState = s;
+      if (s.updatedById === myId) return;
+
+      if (prev && !s.auto) {
+        const who = s.updatedBy || 'Kimsə';
+        if (s.isPlaying !== prev.isPlaying) {
+          showToast(who + (s.isPlaying ? ' videonu başlatdı ▶' : ' videonu dayandırdı ⏸'));
+        } else {
+          const prevAt = typeof prev.updatedAt === 'number' ? prev.updatedAt : s.updatedAt;
+          const prevExp = prev.isPlaying ? (prev.time || 0) + (s.updatedAt - prevAt) / 1000 : (prev.time || 0);
+          if (Math.abs((s.time || 0) - prevExp) > 2) {
+            const t = Math.max(0, Math.floor(s.time || 0));
+            const mm = Math.floor(t / 60), ss = String(t % 60).padStart(2, '0');
+            showToast(who + ' videonu ' + mm + ':' + ss + '-ə çəkdi ⏩');
+          }
+        }
+      }
+
+      const target = expectedTime(s);
+      if (Math.abs(video.currentTime - target) > 1.0) {
+        quietly(() => seekTo(target), 1500);
+      } else {
+        quietly(() => {}, 600);
+      }
+
+      if (s.isPlaying) {
+        // Kimsə buffer edirsə, oynatma — buffer bitəndə birlikdə başlayacaq
+        if (video.paused && !othersBuffering && !myBuffering) {
+          quietly(() => video.play().catch(() => {}), 1200);
+        } else if (video.paused && othersBuffering) {
+          pausedForBuffer = true;
+        }
+      } else {
+        pausedForBuffer = false;
+        if (!video.paused) quietly(() => video.pause(), 1000);
+      }
+    };
+    stateRef.on('value', stateListenerFn);
+  }
+
+  function renderChat(messages) {
+    const log = $('wp-chat-log');
+    if (!messages || messages.length === 0) {
+      log.innerHTML = '<div class="wp-empty">Hələ mesaj yoxdur. İlk yazan sən ol.</div>';
+      return;
+    }
+    log.innerHTML = messages.map(m => {
+      const mine = m.id ? m.id === myId : m.name === myName;
+      const t = new Date(m.ts);
+      const time = t.getHours().toString().padStart(2, '0') + ':' + t.getMinutes().toString().padStart(2, '0');
+      return '<div class="wp-msg' + (mine ? ' mine' : '') + '">' +
+        '<span class="name">' + escapeHtml(m.name) + '</span>' +
+        '<span class="text">' + escapeHtml(m.text) + '</span>' +
+        '<span class="time">' + time + '</span></div>';
+    }).join('');
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function startChatListener() {
+    let lastTs = 0;
+    chatInitialized = false;
+    chatQuery = chatRef.child('messages').limitToLast(100);
+    chatListenerFn = (snap) => {
+      const messages = [];
+      snap.forEach(ch => { const m = ch.val(); if (m && m.text) messages.push(m); });
+      messages.sort((x, y) => (x.ts || 0) - (y.ts || 0));
+      if (chatInitialized) {
+        messages.forEach(m => {
+          const mineMsg = m.id ? m.id === myId : m.name === myName;
+          if ((m.ts || 0) > lastTs && !mineMsg) notifyNewMessage(m.name, m.text);
+        });
+      }
+      if (messages.length) lastTs = Math.max(lastTs, messages[messages.length - 1].ts || 0);
+      chatInitialized = true;
+      renderChat(messages);
+    };
+    chatQuery.on('value', chatListenerFn);
+  }
+
+  async function sendMessage() {
+    const input = $('wp-msg-input');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    try {
+      await chatRef.child('messages').push({ id: myId, name: myName, text: text, ts: firebase.database.ServerValue.TIMESTAMP });
+    } catch (e) {
+      console.error('mesaj göndərilmədi', e);
+    }
+  }
+
+  function leaveRoom() {
+    leavingIntentionally = true;
+    if (stateRef && stateListenerFn) stateRef.off('value', stateListenerFn);
+    if (chatQuery && chatListenerFn) chatQuery.off('value', chatListenerFn);
+    if (presenceRef) {
+      if (presenceValueFn) presenceRef.off('value', presenceValueFn);
+      if (presenceAddedFn) presenceRef.off('child_added', presenceAddedFn);
+      if (presenceRemovedFn) presenceRef.off('child_removed', presenceRemovedFn);
+      presenceRef.child(myId).onDisconnect().cancel();
+      presenceRef.child(myId).remove().catch(() => {});
+    }
+    clearInterval(heartbeatTimer);
+    clearTimeout(bufferDebounce);
+    if (bufferRef) {
+      if (bufferListenerFn) bufferRef.off('value', bufferListenerFn);
+      bufferRef.child(myId).onDisconnect().cancel();
+      bufferRef.child(myId).remove().catch(() => {});
+    }
+    myBuffering = false; othersBuffering = false; pausedForBuffer = false; remoteState = null;
+    video.playbackRate = 1;
+    video.pause();
+    video.src = '';
+    isFsMode = false;
+    hideFsNotify();
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    $('wp-setup').style.display = 'block';
+    $('wp-live').classList.remove('on');
+    $('wp-people').classList.remove('on');
+    $('wp-video-wrap').classList.remove('on');
+    $('wp-chat').classList.remove('on');
+    $('wp-leave').style.display = 'none';
+    showStep('wp-step-choice');
+    room = null;
+  }
+
+  $('wp-choice-create').addEventListener('click', () => showStep('wp-step-create'));
+  $('wp-choice-join').addEventListener('click', () => showStep('wp-step-join'));
+  $('wp-back-1').addEventListener('click', () => showStep('wp-step-choice'));
+  $('wp-back-2').addEventListener('click', () => showStep('wp-step-choice'));
+  $('wp-create-go').addEventListener('click', createRoom);
+  $('wp-join-go').addEventListener('click', joinRoom);
+  $('wp-send').addEventListener('click', sendMessage);
+  $('wp-msg-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') sendMessage();
+  });
+
+  // ---- Kod / link kopyala ----
+  async function copyText(text, okMsg) {
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(text);
+      ok = true;
+    } catch (e) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, 99999);
+        ok = document.execCommand('copy');
+        ta.remove();
+      } catch (e2) {}
+    }
+    showToast(ok ? okMsg : 'Kopyalamaq alınmadı: ' + text, ok ? 'join' : 'warn');
+  }
+  function roomLink() {
+    return location.origin + location.pathname + '?room=' + encodeURIComponent(room);
+  }
+  $('wp-copy-btn').addEventListener('click', () => { if (room) copyText(room, 'Otaq kodu kopyalandı ✓'); });
+  $('wp-link-btn').addEventListener('click', () => { if (room) copyText(roomLink(), 'Qoşulma linki kopyalandı ✓'); });
+
+  // ---- Otaqdan çıxmaq üçün təsdiq ----
+  $('wp-leave').addEventListener('click', () => {
+    $('wp-leave-modal').classList.add('on');
+  });
+  $('wp-leave-cancel').addEventListener('click', () => {
+    $('wp-leave-modal').classList.remove('on');
+  });
+  $('wp-leave-confirm').addEventListener('click', () => {
+    $('wp-leave-modal').classList.remove('on');
+    leaveRoom();
+  });
+
+  // ---- Səhifəni bağlayanda/tərk edəndə xəbərdarlıq ----
+  window.addEventListener('beforeunload', (e) => {
+    if (room) {
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
